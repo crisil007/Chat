@@ -26,26 +26,49 @@ const Chat = () => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
+  
+    if (!message.trim()) {
+      alert("Message cannot be empty!");
+      return;
+    }
+  
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Authorization token is missing!");
+      return;
+    }
+  
     try {
+   
       const response = await fetch("http://localhost:3000/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ message }),
       });
-      if (response.ok) {
-        const newMessage = await response.json();
-        setMessages([newMessage, ...messages]);
-        setMessage("");
-      } else {
-        alert("Failed to send message.");
+  
+      if (!response.ok) {
+        const errorDetails = await response.json().catch(() => "No JSON response");
+        console.error("Error from server:", errorDetails);
+        alert(`Failed to send message: ${errorDetails.error || response.statusText}`);
+        return;
       }
+  
+      const newMessage = await response.json();
+      console.log("New message received:", newMessage);
+      setMessages((prevMessages) => [newMessage, ...prevMessages]);
+      setMessage("");
+      
     } catch (error) {
       console.error("Error sending message:", error);
+      alert("An error occurred while sending the message.");
     }
   };
+  
+  
+  
 
   return (
     <div>
