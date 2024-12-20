@@ -16,7 +16,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-router.get("/", authenticateToken, getMessages);
+router.get("/get", authenticateToken, getMessages);
 router.post("/send", authenticateToken, sendMessage);
 
 module.exports = router;
