@@ -16,7 +16,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-router.get("/get", authenticateToken, getMessages);
-router.post("/send", authenticateToken, sendMessage);
+router.get("/messages/:senderId/:receiverId", getMessages);
+
+// Route to send a message
+router.post("/messages", sendMessage);
 
 module.exports = router;

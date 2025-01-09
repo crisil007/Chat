@@ -17,7 +17,7 @@ const Login = () => {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.token); // Save token for authenticated requests
-        navigate("/chat");
+        navigate("/chat/:receiverId");
       } else {
         alert("Login failed.");
       }

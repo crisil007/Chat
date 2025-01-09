@@ -1,35 +1,34 @@
 const Chat = require("../db/models/Chat");
 
+// Fetch messages between two users
 exports.getMessages = async (req, res) => {
+  const { senderId, receiverId } = req.params;
+
   try {
-    const messages = await Chat.find().sort({ timestamp: -1 });
-    res.json(messages);
+    const messages = await Chat.find({
+      $or: [
+        { sender: senderId, receiver: receiverId },
+        { sender: receiverId, receiver: senderId },
+      ],
+    }).sort({ timestamp: 1 });
+
+    res.json(messages); // Return the list of messages
   } catch (err) {
+    console.error("Error fetching messages:", err);
     res.status(500).json({ error: "Could not fetch messages" });
   }
 };
 
+// Send a new message
 exports.sendMessage = async (req, res) => {
+  const { sender, receiver, message } = req.body;
+
   try {
-    console.log("Incoming request body:", req.body); // Log incoming data
-
-    const { sender, message } = req.body;
-
-    // Validate request body
-    if (!sender || !message) {
-      console.log("Validation failed: Missing sender or message.");
-      return res.status(400).json({ error: "Sender and message are required" });
-    }
-
-    console.log("Validation passed. Saving message...");
-    const newMessage = new Chat({ sender, message });
-
-    await newMessage.save(); // Attempt to save
-    console.log("Message saved successfully:", newMessage);
-
-    res.status(201).json(newMessage);
+    const newMessage = new Chat({ sender, receiver, message });
+    await newMessage.save();
+    res.status(201).json(newMessage); // Return the saved message
   } catch (err) {
-    console.error("Error while saving message:", err); // Log detailed error
+    console.error("Error sending message:", err);
     res.status(500).json({ error: "Could not send message" });
   }
 };
