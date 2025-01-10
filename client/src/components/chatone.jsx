@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Chat from "./Chat";
+import Chat from "./chat"; // Your Chat component
 import { FaUserCircle } from "react-icons/fa";
 import { io } from "socket.io-client";
 import jwt_decode from "jwt-decode";
@@ -32,7 +32,7 @@ const ChatOne = () => {
     socket.on("online-status", (data) => {
       setOnlineStatus((prevState) => ({
         ...prevState,
-        [data.userId]: data.status === "online" ? "Online" : `Last seen: ...`,
+        [data.userId]: data.status,
       }));
     });
 
@@ -52,13 +52,13 @@ const ChatOne = () => {
     setSelectedReceiver(receiverId);
   };
 
-  const isOnline = (userId) => onlineStatus[userId] === "Online" ;
+  const isOnline = (userId) => onlineStatus[userId] === "online";
 
   const filteredUsers = users.filter((user) => user._id !== loggedInUserId);
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
-      <div className="w-1/3 bg-gray-800 p-6">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
+      <div className="w-full md:w-1/3 bg-gray-800 p-6 md:p-8">
         <div className="flex items-center mb-6">
           <div className="w-12 h-12 rounded-full bg-white text-gray-800 flex items-center justify-center font-semibold">
             CC
@@ -72,23 +72,29 @@ const ChatOne = () => {
               key={user._id}
               onClick={() => selectReceiver(user._id)}
               className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                selectedReceiver === user._id ? "bg-green-600" : "hover:bg-gray-700"
+                selectedReceiver === user._id
+                  ? "bg-green-600"
+                  : "hover:bg-gray-700"
               }`}
             >
               <FaUserCircle size={40} className="mr-3" />
               <div>
                 <p className="font-semibold">{user.username}</p>
-                <p className="text-sm text-green-400">
-                  {isOnline(user._id) ? "Online" : "Offline" }
+                <p
+                  className={`text-sm ${
+                    isOnline(user._id) ? "text-green-400" : "text-gray-400"
+                  }`}
+                >
+                  {isOnline(user._id) ? "Online" : "Offline"}
                 </p>
               </div>
             </li>
           ))}
         </ul>
       </div>
-      <div className="w-2/3 bg-gray-100">
+      <div className="w-full md:w-2/3 bg-gray-100 md:h-screen">
         {selectedReceiver ? (
-          <Chat receiverId={selectedReceiver} />
+          <Chat receiverId={selectedReceiver} setSelectedReceiver={setSelectedReceiver} />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Select a user to start chatting

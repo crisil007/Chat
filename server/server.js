@@ -28,8 +28,9 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // React frontend URL
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -38,24 +39,22 @@ app.use(express.json());
 app.use(authRoutes);
 app.use(chatRoutes);
 
-// Track online users for each logged-in user
-let onlineUsers = {}; // userId: socketId
+// Track online users
+let onlineUsers = {};
 
 // Real-Time Communication
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("Socket connected:", socket.id);
 
   // Handle user login and save userId
   socket.on("user-connected", async (userId) => {
     console.log(`User ${userId} connected`);
-
-    // Add user to the online list
     onlineUsers[userId] = socket.id;
 
-    // Notify all other clients (except the logged-in user) about the updated online users
-    socket.broadcast.emit("online-status", { userId, status: "online" });
+    // Notify all clients about online status
+    io.emit("online-status", { userId, status: "online" });
 
-    // Send chat history to the connected user
+    // Send chat history to the connected user (if needed)
     const messages = await Chat.find().sort({ timestamp: 1 });
     socket.emit("chat-history", messages);
   });
@@ -70,16 +69,15 @@ io.on("connection", (socket) => {
       console.log(`User ${userId} disconnected`);
       delete onlineUsers[userId];
 
-      // Notify all other clients (except the logged-out user) about the updated online users
-      socket.broadcast.emit("online-status", { userId, status: "offline" });
+      // Notify all clients about offline status
+      io.emit("online-status", { userId, status: "offline" });
 
       // Update the user's last seen in the database
-      await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
-    
-  
-
-      // Notify all connected users (in case you want to inform others about offline status)
-      io.emit("online-status", { userId, status: "offline" });
+      try {
+        await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+      } catch (error) {
+        console.error(`Error updating last seen for user ${userId}:`, error);
+      }
     }
   });
 });

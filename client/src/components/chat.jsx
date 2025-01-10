@@ -1,10 +1,10 @@
-// Chat.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { BsSend } from "react-icons/bs";
+import { FaArrowLeft } from "react-icons/fa";
 
-const Chat = ({ receiverId }) => {
+const Chat = ({ receiverId, setSelectedReceiver }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [sender, setSender] = useState(null);
@@ -110,9 +110,16 @@ const Chat = ({ receiverId }) => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-gray-100">
+    <div className="flex flex-col w-full h-full bg-gray-100">
       <div className="flex items-center p-4 bg-teal-600 text-white">
-        <div className="flex items-center space-x-3">
+        {/* Back Arrow */}
+        <button
+          onClick={() => setSelectedReceiver(null)} // This will trigger the parent component to show user list
+          className="p-2"
+        >
+          <FaArrowLeft size={20} />
+        </button>
+        <div className="flex items-center space-x-3 ml-2">
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-xl font-bold">
             {receiverUsername.charAt(0).toUpperCase()}
           </div>
