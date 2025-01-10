@@ -1,29 +1,39 @@
-import React, { useState, useEffect } from "react";
+// Chat.js
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import jwt_decode from "jwt-decode"; // Decode the token to get sender info
+import jwt_decode from "jwt-decode";
+import { BsSend } from "react-icons/bs";
 
 const Chat = ({ receiverId }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [sender, setSender] = useState(null);
-  const [senderUsername, setSenderUsername] = useState(""); // State to store sender's username
-  const [receiverUsername, setReceiverUsername] = useState(""); // State to store receiver's username
+  const [senderUsername, setSenderUsername] = useState("");
+  const [receiverUsername, setReceiverUsername] = useState("");
+
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwt_decode(token);
-      setSender(decoded.id); // Assuming your token contains the user ID
-      fetchSenderUsername(decoded.id); // Fetch sender's username
+      setSender(decoded.id);
+      fetchSenderUsername(decoded.id);
     }
-    fetchReceiverUsername(receiverId); // Fetch receiver's username
+    fetchReceiverUsername(receiverId);
   }, [receiverId]);
 
   useEffect(() => {
     if (sender) {
-      fetchMessages(); // Fetch messages when sender is set
+      fetchMessages();
     }
   }, [sender, receiverId]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const fetchMessages = async () => {
     try {
@@ -41,7 +51,6 @@ const Chat = ({ receiverId }) => {
     }
   };
 
-  // Fetch sender's username using the user ID
   const fetchSenderUsername = async (senderId) => {
     try {
       const response = await axios.get(
@@ -52,13 +61,12 @@ const Chat = ({ receiverId }) => {
           },
         }
       );
-      setSenderUsername(response.data.username); // Store sender's username
+      setSenderUsername(response.data.username);
     } catch (error) {
       console.error("Error fetching sender's username:", error);
     }
   };
 
-  // Fetch receiver's username using the receiver ID
   const fetchReceiverUsername = async (receiverId) => {
     try {
       const response = await axios.get(
@@ -69,7 +77,7 @@ const Chat = ({ receiverId }) => {
           },
         }
       );
-      setReceiverUsername(response.data.username); // Store receiver's username
+      setReceiverUsername(response.data.username);
     } catch (error) {
       console.error("Error fetching receiver's username:", error);
     }
@@ -94,7 +102,7 @@ const Chat = ({ receiverId }) => {
           },
         }
       );
-      setMessages((prevMessages) => [response.data, ...prevMessages]);
+      setMessages((prevMessages) => [...prevMessages, response.data]);
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -102,33 +110,50 @@ const Chat = ({ receiverId }) => {
   };
 
   return (
-    <div className="chat-container">
-      {/* Messages Section */}
-      <div className="messages-section">
+    <div className="flex flex-col w-full h-screen bg-gray-100">
+      <div className="flex items-center p-4 bg-teal-600 text-white">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-xl font-bold">
+            {receiverUsername.charAt(0).toUpperCase()}
+          </div>
+          <h2 className="text-xl font-semibold">{receiverUsername}</h2>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={msg.sender === sender ? "sent" : "received"}
+            className={`flex ${msg.sender === sender ? "justify-end" : "justify-start"}`}
           >
-            <span>
-              {msg.sender === sender
-                ? senderUsername
-                : receiverUsername || "Receiver"}:{" "}
-            </span>
-            <span>{msg.message}</span>
+            <div
+              className={`max-w-xs p-3 rounded-lg text-sm shadow-md ${
+                msg.sender === sender
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-300 text-gray-800"
+              }`}
+            >
+              <span>{msg.message}</span>
+            </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Section */}
-      <form onSubmit={sendMessage} className="message-input">
+      <form onSubmit={sendMessage} className="flex p-4 bg-gray-200">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message"
+          placeholder="Type a message..."
+          className="flex-1 p-3 rounded-l-full border-t border-l border-b border-gray-300 focus:outline-none text-black"
         />
-        <button type="submit">Send</button>
+        <button
+          type="submit"
+          className="p-3 bg-green-500 text-white rounded-r-full hover:bg-green-600"
+        >
+          <BsSend size={20} />
+        </button>
       </form>
     </div>
   );
